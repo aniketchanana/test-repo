@@ -1,0 +1,61 @@
+@import 'tailwindcss';
+
+:root {
+  color-scheme: dark;
+  font-family:
+    'Segoe UI',
+    system-ui,
+    -apple-system,
+    sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100svh;
+  background: #0f1115;
+  color: #e8e4dc;
+}
+
+#root {
+  min-height: 100svh;
+}
+
+.perspective {
+  perspective: 1400px;
+}
+
+.flashcard-inner {
+  position: relative;
+  width: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+}
+
+.flashcard-inner.is-flipped {
+  transform: rotateY(180deg);
+}
+
+.flashcard-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  min-height: 28rem;
+}
+
+.flashcard-back {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flashcard-inner {
+    transition: none;
+  }
+}

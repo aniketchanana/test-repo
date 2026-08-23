@@ -1,0 +1,272 @@
+[
+  {
+    "id": 1,
+    "domain": "D1 Agentic Architecture & Orchestration",
+    "question": "A research system receives a customer query: 'Compare the environmental impact and cost- effectiveness of electric vehicles versus hydrogen fuel cell vehicles for commercial fleet operations.' The fleet manager needs a like-for-like comparison, with each dimension measured consistently across both vehicle types. The coordinator must decide how to decompose this task. Which decomposition strategy is most appropriate?",
+    "options": {
+      "A": "Single-agent approach: assign the entire comparison to one research agent with access to all tools",
+      "B": "Parallel tracks by dimension (environmental impact, cost-effectiveness), each covering both vehicle types, then synthesise.",
+      "C": "Vehicle-based decomposition: assign one agent to research EVs and another to research hydrogen fuel cells, then merge findings",
+      "D": "Dynamic adaptive decomposition: start with a broad search and let the coordinator decide next steps based on what it finds"
+    },
+    "feedback": {
+      "A": "A single agent with all tools violates scoped tool access and would struggle with attention dilution across the multiple dimensions of this comparison (environmental impact, cost-effectiveness, two vehicle types, commercial fleet context).",
+      "B": "The query has two distinct analytical dimensions (environmental impact and cost-effectiveness) applied to the same subjects. Multi-concern decomposition splits these into parallel tracks, each with its own subagent. Both tracks investigate both vehicle types, ensuring consistent comparison methodology. A synthesis step produces the unified comparison.",
+      "C": "Splitting by vehicle type risks inconsistent comparison methodology. One agent might emphasise different environmental metrics than the other, making the comparison unreliable. Splitting by analytical dimension (environmental impact, cost-effectiveness) ensures each dimension uses consistent methodology across both vehicle types.",
+      "D": "The query's structure is clear and predictable — two analytical dimensions (environmental, cost), two vehicle types, one context (commercial fleets). Dynamic adaptive decomposition is for open-ended investigations where the next steps are unknown. Here, multi-concern decomposition is more efficient."
+    },
+    "correct_answer": "B"
+  },
+  {
+    "id": 2,
+    "domain": "D2 Tool Design & MCP Integration",
+    "question": "The data platform team has built an MCP server with 22 tools: query_snowflake, query_postgres, query_api, plus 19 specialised tools for individual data transformations (pivot_table, calculate_percentile, normalise_currency, etc.). Agents take 3-4 turns to select the correct tool and frequently choose the wrong transformation. What is the most effective redesign?",
+    "options": {
+      "A": "Improve all 22 tool descriptions with detailed examples and boundary conditions to help the agent distinguish between them.",
+      "B": "Consolidate the 19 transformation tools into a single transform_data tool with a transform_type parameter, reducing the total to 4 tools.",
+      "C": "Use tool_choice: 'any' to force the agent to always call a tool, eliminating turns where the agent reasons without acting.",
+      "D": "Split the tools across two separate MCP servers — one for queries and one for transformations — to reduce cognitive load."
+    },
+    "feedback": {
+      "A": "Better descriptions help, but 22 tools still exceeds the practical limit for reliable selection. Research shows tool selection degrades significantly beyond 4-5 tools per agent. The tool count itself is the problem.",
+      "B": "Reducing from 22 to 4 tools brings the count within the optimal 4-5 range for reliable tool selection. The 19 transformation tools share a common pattern (input data, transformation type, output format) and are natural candidates for consolidation into a single parameterised tool.",
+      "C": "Forcing tool calls does not improve selection accuracy — it just ensures the agent picks something, potentially the wrong tool. The root cause is too many similar tools, not too few tool calls.",
+      "D": "MCP server boundaries are invisible to the agent. All tools from all connected servers appear in a single list. Splitting across servers does not reduce the number of tools the agent must choose from."
+    },
+    "correct_answer": "B"
+  },
+  {
+    "id": 3,
+    "domain": "D1 Agentic Architecture & Orchestration",
+    "question": "The team's refactoring pipeline uses a PreToolUse hook to enforce that every new microservice includes a Dockerfile. However, the hook only checks for Dockerfile existence at the moment the create_service tool is called. A developer points out that some services have their Dockerfiles added in a later commit by a different subagent. What is the flaw in this approach?",
+    "options": {
+      "A": "The hook should use PostToolUse instead of PreToolUse, checking after service creation whether a Dockerfile was added",
+      "B": "Gate the deployment or merge tool rather than create_service, checking Dockerfile existence when the service is considered complete.",
+      "C": "Run the hook on every single file write and continuously re-check whether a Dockerfile has appeared yet, failing the build until one does.",
+      "D": "The PreToolUse hook is correct but needs a timeout to wait for the Dockerfile to appear within a configurable window"
+    },
+    "feedback": {
+      "A": "PostToolUse checks after the tool executes but still only at that single point in time. If the Dockerfile is added in a later commit by a different subagent, PostToolUse on create_service will still miss it.",
+      "B": "Compliance checks should be enforced at the boundary where the precondition must hold — in this case, before deployment or merge. Checking at service creation time is too early when the workflow allows Dockerfiles to be added in subsequent steps. Moving the gate to the deployment or merge boundary ensures all required artefacts are present regardless of which subagent adds them.",
+      "C": "Running a Dockerfile check on every file write is wasteful and creates unnecessary overhead. The check should happen once at the right boundary (deployment or merge), not continuously during development.",
+      "D": "Adding a timeout introduces non-deterministic behaviour and race conditions. The correct fix is to move the enforcement gate to the right point in the workflow, not to add polling delays."
+    },
+    "correct_answer": "B"
+  },
+  {
+    "id": 4,
+    "domain": "D4 Prompt Engineering & Structured Output",
+    "question": "Your CI/CD code review pipeline has a 40% false positive rate on 'documentation mismatch' findings, causing developers to ignore ALL review categories. What is the most effective fix?",
+    "options": {
+      "A": "Add 'only report high-confidence documentation issues' to the system prompt",
+      "B": "Temporarily disable the documentation mismatch category while refining its prompts with explicit criteria and code examples",
+      "C": "Increase the model temperature to get more varied results and filter outliers",
+      "D": "Add a second model pass to verify each finding before reporting"
+    },
+    "feedback": {
+      "A": "Vague confidence instructions do not improve precision. The model has no concrete criteria for what 'high- confidence' means.",
+      "B": "This restores trust in other categories immediately while you iterate on the problematic category with specific criteria.",
+      "C": "Temperature affects randomness, not precision. This would likely increase false positives.",
+      "D": "A second pass without better criteria will have the same false positive problem. Fix the criteria first."
+    },
+    "correct_answer": "B"
+  },
+  {
+    "id": 5,
+    "domain": "D3 Claude Code Configuration & Workflows",
+    "question": "A codebase has test files co-located with source files throughout 50+ directories (e.g., Button.test.tsx next to Button.tsx). The team wants all tests to follow the same conventions regardless of location. What is the most maintainable approach?",
+    "options": {
+      "A": "Create a .claude/rules/ file with frontmatter paths: [\"**/*.test.tsx\", \"**/*.test.ts\"] holding the test conventions",
+      "B": "Place a CLAUDE.md file in every directory containing test files",
+      "C": "Add all test conventions to the root CLAUDE.md file",
+      "D": "Create a skill in .claude/skills/ with a paths frontmatter matching the test files so it auto- activates whenever a test file is edited"
+    },
+    "feedback": {
+      "A": "Glob patterns in .claude/rules/ match files by pattern across the entire codebase. The conventions load automatically when editing any test file, regardless of directory. No maintenance burden as new test files are added.",
+      "B": "With 50+ directories, this creates massive duplication and maintenance burden. Every new directory with tests would need a copy.",
+      "C": "Root CLAUDE.md loads for every session. Test conventions would consume tokens even when editing non-test files like API handlers or database models.",
+      "D": "Skills can auto-activate via a paths frontmatter, but they load on demand as a task-style workflow, not as always-in-context guidance. Test conventions must shape every edit to a matching file, which is what .claude/rules/ provides: rules load into context automatically when Claude reads a matching file, with no invocation step."
+    },
+    "correct_answer": "A"
+  },
+  {
+    "id": 6,
+    "domain": "D5 Context Management & Reliability",
+    "question": "A data engineer delegates a complex cross-database analysis to the platform agent: join Snowflake billing data with PostgreSQL usage data, apply currency normalisation, and produce a cost-per-user breakdown by region. The agent's context fills rapidly as it accumulates intermediate query results. What is the most effective strategy for managing this multi-step analysis within context limits?",
+    "options": {
+      "A": "Write intermediate results to a scratchpad file after each step, then read back only the final aggregated data needed for the cost-per-user calculation.",
+      "B": "Execute all queries in a single SQL statement using cross-database joins to avoid intermediate results entirely.",
+      "C": "Delegate each step to a separate subagent so each runs with a fresh context window, then combine their outputs.",
+      "D": "Summarise intermediate results between steps to reduce their token footprint in the conversation context."
+    },
+    "feedback": {
+      "A": "Scratchpad files offload intermediate results from the context window. Each step writes its output to a file, keeping the context budget free for the current step's reasoning. The final step reads back only the aggregated data it needs, avoiding the accumulation of raw intermediate results in context.",
+      "B": "Cross-database joins between Snowflake and PostgreSQL are not possible in a single SQL statement — they are separate database systems accessed through different MCP tools. The multi-step approach is architecturally necessary.",
+      "C": "Subagent delegation is useful for independent parallel tasks, but this analysis has sequential dependencies (each step depends on the previous step's output). Subagents would need the same intermediate data passed to them, merely shifting the context problem rather than solving it.",
+      "D": "Summarising intermediate numerical results risks the progressive summarisation trap — exact billing figures, usage counts, and exchange rates may be compressed into qualitative descriptions, causing calculation errors in subsequent steps."
+    },
+    "correct_answer": "A"
+  },
+  {
+    "id": 7,
+    "domain": "D3 Claude Code Configuration & Workflows",
+    "question": "A team wants to enforce that all SQL migration files created by Claude Code follow a strict naming convention (YYYYMMDD_HHMMSS_description.sql) and contain a rollback section. Which approach provides deterministic enforcement without relying on the model's judgment?",
+    "options": {
+      "A": "Add a PostToolUse hook on file creation that validates the filename pattern and checks for a rollback section",
+      "B": "Document the naming convention and rollback requirement in the project CLAUDE.md with clear examples",
+      "C": "Create a .claude/rules/migrations.md file with paths: [\"**/migrations/**/*.sql\"] containing the naming convention",
+      "D": "Use a PreToolUse hook to inject the naming convention into every prompt before file creation occurs"
+    },
+    "feedback": {
+      "A": "PostToolUse hooks run deterministic validation code after tool execution. A hook that checks filename patterns and content requirements provides reliable, automated enforcement that does not depend on the model remembering or correctly interpreting naming conventions.",
+      "B": "CLAUDE.md instructions rely on the model's interpretation and compliance. While useful as guidance, they do not provide deterministic enforcement. The model may occasionally deviate from the convention, especially under complex prompts.",
+      "C": "Rules files provide context-specific instructions but still rely on the model to follow them. They do not provide deterministic enforcement. A hook-based approach guarantees compliance through automated validation.",
+      "D": "PreToolUse hooks fire before tool execution and are better suited for blocking or modifying tool calls. Injecting instructions into prompts still relies on the model's compliance. PostToolUse validation provides deterministic enforcement by checking the actual output."
+    },
+    "correct_answer": "A"
+  },
+  {
+    "id": 8,
+    "domain": "D1 Agentic Architecture & Orchestration",
+    "question": "During the monolith-to-microservices refactoring, each extracted service must follow a consistent Java package naming convention (com.company.service.<service-name>). The team notices that subagents sometimes use inconsistent package names like com.company.app.<service-name> or com.company.<service-name>. A team member proposes adding stronger instructions to the system prompt. What is the correct approach?",
+    "options": {
+      "A": "Add the naming convention to the system prompt with three concrete examples showing the correct pattern",
+      "B": "Implement a PostToolUse hook that inspects written files and normalises any package declarations to the correct com.company.service.<service-name> format",
+      "C": "Create a separate validation subagent that reviews all written files for naming compliance after each refactoring batch",
+      "D": "Use tool_choice to restrict the agent to a custom write_java_file tool that enforces the naming convention in its implementation"
+    },
+    "feedback": {
+      "A": "Prompt instructions with examples improve consistency but still have a non-zero failure rate. Package naming is a deterministic rule that must be enforced 100% of the time to avoid broken imports across services.",
+      "B": "A PostToolUse hook on file write operations can inspect the output and normalise package names deterministically. This provides a 100% enforcement guarantee regardless of what the model generates, which is the correct approach for structural consistency rules.",
+      "C": "A validation subagent is still probabilistic — it may miss violations. PostToolUse hooks provide deterministic, inline enforcement that catches every violation at the point of file creation.",
+      "D": "Creating a custom tool wrapper adds unnecessary complexity. PostToolUse hooks on the existing file write tool achieve the same deterministic enforcement without modifying the tool interface."
+    },
+    "correct_answer": "B"
+  },
+  {
+    "id": 9,
+    "domain": "D3 Claude Code Configuration & Workflows",
+    "question": "A developer asks Claude Code to 'explain the order processing pipeline' before refactoring it. The pipeline spans 15 classes across 4 packages with deep inheritance and callback chains. Claude Code reads 3 files and produces a superficial summary that misses the callback chain entirely. What approach would produce a more thorough analysis?",
+    "options": {
+      "A": "Re-prompt Claude Code with more specific instructions listing all 15 classes to read",
+      "B": "Use an Explore subagent for verbose discovery across the pipeline's classes and callback chains",
+      "C": "Switch to plan mode and ask Claude Code to create a plan for understanding the pipeline",
+      "D": "Run multiple Claude Code sessions, each analysing a different package, then manually combine the results"
+    },
+    "feedback": {
+      "A": "This assumes the developer already knows which 15 classes are involved. If the developer knew the full scope, they would not need Claude Code's help understanding the pipeline. The issue is that Claude Code's initial exploration was too shallow.",
+      "B": "The Explore subagent is purpose-built for verbose, thorough codebase discovery. It systematically follows references, traces inheritance, and maps control flow across files — exactly what is needed for a complex event-driven pipeline. Regular Claude Code defaults to efficient, minimal reads; the Explore subagent prioritises comprehensive discovery.",
+      "C": "Plan mode can safely explore a codebase before you commit to changes, but it runs in the main conversation and drives toward a change plan. Here the developer needs thorough, verbose discovery of current behaviour, which the Explore subagent isolates and summarises without exhausting the main context, so the Explore subagent is the better fit.",
+      "D": "Splitting analysis across sessions loses the cross-package context needed to trace the callback chains and inheritance hierarchies. The pipeline's complexity comes from how the 4 packages interact, which requires a single comprehensive analysis."
+    },
+    "correct_answer": "B"
+  },
+  {
+    "id": 10,
+    "domain": "D2 Tool Design & MCP Integration",
+    "question": "A `query_postgres` MCP tool returns 500 on transient server overload and 404 on missing tables. The agent retries both identically, exhausting retries on missing tables and then failing to retry once the server recovers. What change to the error response structure would fix this?",
+    "options": {
+      "A": "Return all errors with the MCP isError flag set to true and include the HTTP status code in the error message text so the agent can parse it.",
+      "B": "Add a structured category field so the agent retries transient errors but not permanent errors like a missing table.",
+      "C": "Remove the retry logic entirely and escalate all errors to the user immediately for manual resolution.",
+      "D": "Increase the retry limit from 3 to 10 so the agent has enough attempts to cover both transient and permanent errors."
+    },
+    "feedback": {
+      "A": "Embedding status codes in free-text messages requires the agent to parse unstructured text, which is unreliable. Structured error categorisation is more robust than parsing status codes from strings.",
+      "B": "Structured error categories give the agent explicit recovery guidance. Transient errors (overload, timeout) warrant retries; a missing table is a permanent failure that retrying never resolves, since the table still will not exist on the next attempt. This eliminates wasted retries on unrecoverable errors.",
+      "C": "Removing retries eliminates the agent's ability to recover from transient failures automatically. The goal is smarter retries, not no retries.",
+      "D": "More retries waste time on permanent errors (missing tables will never appear) and add unnecessary latency. The problem is retry categorisation, not retry count."
+    },
+    "correct_answer": "B"
+  },
+  {
+    "id": 11,
+    "domain": "D5 Context Management & Reliability",
+    "question": "An agent receives 200 rows of Snowflake financial data and places it mid-prompt, between system instructions and the user's follow-up question. Asked to identify the row with the highest margin, the agent picks the 45th row (margin 32%) over the 142nd row (margin 47%). What cognitive bias is affecting the agent?",
+    "options": {
+      "A": "Recency bias — the agent prioritises data appearing near the end of the context window.",
+      "B": "The lost-in-the-middle effect: the agent favours the start and end, missing the row buried in the middle.",
+      "C": "Token limit truncation — the result set exceeds the context window and rows beyond the 100th are silently dropped.",
+      "D": "Anchoring bias — the agent fixates on the first high-margin row it encounters and stops scanning the rest."
+    },
+    "feedback": {
+      "A": "Recency bias would favour rows near the end of the data, not the 45th row. The 45th row is in the early portion of the result set, which is consistent with the lost-in-the-middle effect, not recency bias.",
+      "B": "The lost-in-the-middle effect causes LLMs to attend disproportionately to content at the start and end of long sequences, with reduced attention to material in the middle. Row 142 (the correct answer) sits deep in the middle of the 200-row result set, making it prone to being overlooked.",
+      "C": "If rows were truncated, the agent would not have access to row 142 at all and would report the highest margin from the visible rows. The agent identified a specific wrong row (45th), indicating all data is present but attention is uneven.",
+      "D": "Anchoring bias is a human cognitive bias, not a well-documented LLM failure mode for structured data scanning. The observed behaviour — accurate recall at the start and end, poor recall in the middle — is the hallmark of the lost-in-the-middle effect."
+    },
+    "correct_answer": "B"
+  },
+  {
+    "id": 12,
+    "domain": "D3 Claude Code Configuration & Workflows",
+    "question": "The team's CLAUDE.md specifies that all new microservices must include integration tests that verify API contract compliance and database migration rollback. A developer notices that Claude Code sometimes generates unit tests that mock the database instead of writing the required integration tests. What should the team add to their configuration?",
+    "options": {
+      "A": "A PostToolUse hook that rejects any test file containing mock annotations",
+      "B": "Tighten the CLAUDE.md test rule with criteria like real DB connections and contract assertions",
+      "C": "A separate testing subagent that reviews generated tests and rewrites any that use mocks",
+      "D": "A .claude/rules/ file with paths: [\"**/*Test.java\"] that instructs Claude Code to never use mocks"
+    },
+    "feedback": {
+      "A": "Rejecting all mocks is too aggressive — unit tests with mocks are still valuable for other purposes. The issue is that integration tests are missing, not that unit tests exist. The configuration should specify what is required, not ban useful testing patterns.",
+      "B": "CLAUDE.md is the correct location for persistent test standards. Specifying concrete criteria (real database connections, API contract assertions) with examples of expected structure and fixtures gives Claude Code an unambiguous target. This addresses the root cause: the existing instructions were not specific enough about what 'integration tests' means in this codebase.",
+      "C": "A review subagent adds complexity and is still probabilistic. Clear specifications in CLAUDE.md solve the issue at the source by telling Claude Code exactly what to generate, rather than correcting after generation.",
+      "D": "Banning mocks from all test files is overly broad — mocks are appropriate in many unit tests. The requirement is specifically that integration tests with real connections must be included, not that mocks must be eliminated."
+    },
+    "correct_answer": "B"
+  },
+  {
+    "id": 13,
+    "domain": "D1 Agentic Architecture & Orchestration",
+    "question": "A coordinator spawns a research subagent to investigate market trends. The subagent returns detailed findings. The coordinator then needs to pass these findings to a synthesis subagent for report writing. However, the synthesis subagent produces a report that contradicts the research findings. What is the most likely cause?",
+    "options": {
+      "A": "The synthesis subagent has a conflicting system prompt that overrides the research data",
+      "B": "The coordinator passes a summary instead of the full structured research output, so the synthesis agent fills gaps from its training data.",
+      "C": "The synthesis subagent has its own web search tool and keeps pulling contradictory information from the open web instead of the research it was handed.",
+      "D": "The two subagents are using different model versions with different training data"
+    },
+    "feedback": {
+      "A": "While possible, conflicting system prompts would produce consistently wrong outputs across all requests. The more common cause is that the coordinator is not passing the full research output, so the synthesis agent fills gaps with its own training data.",
+      "B": "Subagents do not share memory. The coordinator must explicitly pass the complete research output to the synthesis agent. If the coordinator only passes a summary, the synthesis agent has no access to the detailed findings and will rely on its training data to fill gaps, potentially contradicting the actual research.",
+      "C": "A synthesis subagent should not have web search tools; that violates scoped tool access. The real issue is that the full research output is not being passed to it, not that it is searching the web.",
+      "D": "Model version differences would not cause contradictions with explicitly provided research data. The issue is that the research data is not being fully passed to the synthesis agent, not that the agents have different base knowledge."
+    },
+    "correct_answer": "B"
+  },
+  {
+    "id": 14,
+    "domain": "D3 Claude Code Configuration & Workflows",
+    "question": "Two Claude Code instances are running in separate git worktrees: Instance A is extracting the payment service (branch: extract/payment) and Instance B is extracting the inventory service (branch: extract/inventory). Both instances need to modify the shared OrderService.java file — Instance A to remove payment logic and Instance B to remove inventory logic. How should the team coordinate this?",
+    "options": {
+      "A": "Let both instances modify OrderService.java independently on their branches and resolve the merge conflict when merging to main",
+      "B": "Have Instance A complete and merge first, then Instance B rebases onto the updated main before modifying OrderService.java",
+      "C": "Create a third Claude Code instance dedicated to modifying only shared files, with Instances A and B handling everything else",
+      "D": "Use file locking via git to prevent both instances from modifying OrderService.java simultaneously"
+    },
+    "feedback": {
+      "A": "Allowing both instances to make independent, potentially contradictory modifications to the same file risks complex merge conflicts that are difficult to resolve correctly. Coordinating changes to shared files upfront is safer.",
+      "B": "Sequencing modifications to shared files avoids merge conflicts. Instance A completes its changes to OrderService.java and merges. Instance B then rebases onto the updated main, seeing Instance A's changes, and makes its modifications with full awareness of the current state. This is the standard coordination pattern for parallel Claude Code instances modifying shared files.",
+      "C": "A dedicated shared-file instance adds coordination complexity without clear benefit. It needs to understand both extraction contexts to make correct modifications. Sequential merging with rebasing is simpler and more reliable.",
+      "D": "Git does not have built-in file locking for standard workflows. While Git LFS supports file locking, it is designed for binary files, not source code coordination. Sequential merge-and-rebase is the standard approach for coordinating parallel branches."
+    },
+    "correct_answer": "B"
+  },
+  {
+    "id": 15,
+    "domain": "D2 Tool Design & MCP Integration",
+    "question": "An enterprise data platform agent has 22 tools available, including query tools for Snowflake, PostgreSQL, and third-party APIs, plus data transformation, visualisation, export, and administrative tools. The team notices the agent frequently selects the wrong query tool — choosing the Snowflake tool for data that lives in PostgreSQL. What is the most effective architectural fix?",
+    "options": {
+      "A": "Improve the descriptions of all 22 tools to include explicit boundaries and data source mappings.",
+      "B": "Split the agent into role-specific agents — a query agent with 4-5 data source tools, a transformation agent, and an export agent — each scoped to its specialisation.",
+      "C": "Add a pre-processing step that analyses the user query to determine which data source is needed, then use tool_choice forced selection to call the correct query tool.",
+      "D": "Consolidate all query tools into a single universal_query tool that internally routes to the correct data source based on the query syntax."
+    },
+    "feedback": {
+      "A": "Task Statement 2.1 does teach descriptions as the first fix for misrouting, which is why this option is tempting, but that rule assumes the agent has a workable number of tools and simply cannot tell two of them apart. Here there are 22, well past the 4-5 range where selection stays reliable. Decision complexity degrades selection regardless of how well each description is written, so rewriting all 22 treats the symptom and leaves the cause.",
+      "B": "Tool overload at 22 tools degrades selection reliability. Splitting into role-specific agents with 4-5 tools each reduces decision complexity and scopes each agent to its specialisation. The query agent can focus on selecting the right data source without being distracted by transformation or export tools.",
+      "C": "Forced tool selection based on a pre-processing step is over-engineered and brittle. It bypasses the LLM's ability to reason about which tool to use and breaks when queries span multiple data sources.",
+      "D": "A universal query tool hides the data source distinction from the agent. When the agent needs to reason about which data source contains the relevant data, it loses the ability to make that decision explicitly."
+    },
+    "correct_answer": "B"
+  }
+]
