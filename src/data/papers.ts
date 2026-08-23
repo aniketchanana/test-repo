@@ -13,7 +13,7 @@ export const PAPERS: Paper[] = [
   {
     id: 'paper-2',
     label: 'Paper 2',
-    description: 'Incorrect-review set · 15 questions',
+    description: 'Quick drill · 15 questions',
     questionCount: (questions2 as Question[]).length,
   },
   {
