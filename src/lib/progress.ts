@@ -1,4 +1,4 @@
-import type { AnswerMap, PaperId, QuizProgress } from '../types'
+import type { AnswerMap, PaperId, QuizProgress, StudyMode } from '../types'
 
 export const PROGRESS_KEY = 'ccarf-flashcards-progress'
 
@@ -11,17 +11,21 @@ const LEGACY_KEYS = [
 
 export type StoredProgress = QuizProgress & {
   paperId: PaperId
+  mode: StudyMode
+  examSubmitted?: boolean
 }
 
 function isPaperId(value: unknown): value is PaperId {
   return value === 'paper-1' || value === 'paper-2' || value === 'paper-3'
 }
 
+function isStudyMode(value: unknown): value is StudyMode {
+  return value === 'flashcard' || value === 'exam'
+}
+
 export function clearLegacyProgressKeys() {
   try {
-    for (const key of LEGACY_KEYS) {
-      localStorage.removeItem(key)
-    }
+    for (const key of LEGACY_KEYS) localStorage.removeItem(key)
   } catch {
     /* ignore */
   }
@@ -35,6 +39,7 @@ export function loadStoredProgress(): StoredProgress | null {
     const parsed = JSON.parse(raw) as Partial<StoredProgress>
     if (
       !isPaperId(parsed.paperId) ||
+      !isStudyMode(parsed.mode) ||
       typeof parsed.currentIndex !== 'number' ||
       typeof parsed.answers !== 'object' ||
       parsed.answers === null
@@ -43,8 +48,10 @@ export function loadStoredProgress(): StoredProgress | null {
     }
     return {
       paperId: parsed.paperId,
+      mode: parsed.mode,
       currentIndex: parsed.currentIndex,
       answers: parsed.answers as AnswerMap,
+      examSubmitted: Boolean(parsed.examSubmitted),
     }
   } catch {
     return null

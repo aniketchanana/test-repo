@@ -1,5 +1,7 @@
 export type OptionLetter = 'A' | 'B' | 'C' | 'D' | 'E'
 
+export type StudyMode = 'flashcard' | 'exam'
+
 export type Question = {
   id: number
   domain: string

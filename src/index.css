@@ -35,7 +35,7 @@ body {
   position: relative;
   width: 100%;
   transform-style: preserve-3d;
-  transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transition: transform 0.45s cubic-bezier(0.4, 0.2, 0.2, 1);
 }
 
 .flashcard-inner.is-flipped {
@@ -45,7 +45,7 @@ body {
 .flashcard-face {
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  min-height: 28rem;
+  min-height: 22rem;
 }
 
 .flashcard-back {

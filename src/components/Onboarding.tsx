@@ -1,82 +1,122 @@
-import type { Paper, PaperId } from '../types'
+import type { Paper, PaperId, StudyMode } from '../types'
 
 type OnboardingProps = {
   papers: Paper[]
   selectedPaperId: PaperId | null
-  onSelect: (paperId: PaperId) => void
+  selectedMode: StudyMode | null
+  onSelectPaper: (paperId: PaperId) => void
+  onSelectMode: (mode: StudyMode) => void
   onStart: () => void
 }
+
+const MODES: { id: StudyMode; title: string; blurb: string }[] = [
+  {
+    id: 'flashcard',
+    title: 'Flashcard mode',
+    blurb: 'Instant feedback after each answer — best for learning as you go.',
+  },
+  {
+    id: 'exam',
+    title: 'Full exam mode',
+    blurb: 'Answer everything first. Results and explanations unlock at the end.',
+  },
+]
 
 export function Onboarding({
   papers,
   selectedPaperId,
-  onSelect,
+  selectedMode,
+  onSelectPaper,
+  onSelectMode,
   onStart,
 }: OnboardingProps) {
+  const canStart = Boolean(selectedPaperId && selectedMode)
+
   return (
     <div className="mx-auto flex min-h-svh w-full max-w-2xl flex-col justify-center gap-8 px-4 py-10 sm:px-6">
-      <div className="space-y-3 text-center sm:text-left">
+      <div className="space-y-2">
         <p className="text-xs font-semibold tracking-[0.2em] text-orange-400/90 uppercase">
           CCARF Practice Exam
         </p>
         <h1 className="text-3xl font-semibold tracking-tight text-[#f4efe6] sm:text-4xl">
-          Choose a question paper
+          Set up your session
         </h1>
-        <p className="max-w-xl text-sm leading-relaxed text-[#a89f91] sm:text-base">
-          Pick one set to study. Progress is saved for that paper only — reset
-          clears it and brings you back here.
+        <p className="text-sm leading-relaxed text-[#a89f91] sm:text-base">
+          Choose a paper and a study mode. Progress is saved for one session at
+          a time.
         </p>
       </div>
 
-      <div className="grid gap-3">
-        {papers.map((paper) => {
-          const selected = paper.id === selectedPaperId
-          return (
-            <button
-              key={paper.id}
-              type="button"
-              onClick={() => onSelect(paper.id)}
-              className={`rounded-2xl border px-5 py-4 text-left transition ${
-                selected
-                  ? 'border-orange-400/70 bg-orange-500/20 shadow-[0_0_0_1px_rgba(251,146,60,0.25)]'
-                  : 'border-white/12 bg-white/5 hover:border-orange-400/40 hover:bg-white/8'
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-lg font-semibold text-[#f4efe6]">
-                    {paper.label}
-                  </p>
-                  <p className="mt-1 text-sm text-[#a89f91]">
-                    {paper.description}
-                  </p>
+      <section className="space-y-3">
+        <h2 className="text-xs font-semibold tracking-[0.16em] text-[#8a8276] uppercase">
+          1 · Question paper
+        </h2>
+        <div className="grid gap-2">
+          {papers.map((paper) => {
+            const selected = paper.id === selectedPaperId
+            return (
+              <button
+                key={paper.id}
+                type="button"
+                onClick={() => onSelectPaper(paper.id)}
+                className={`rounded-xl border px-4 py-3 text-left transition ${
+                  selected
+                    ? 'border-orange-400/70 bg-orange-500/20'
+                    : 'border-white/12 bg-white/5 hover:border-orange-400/40'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-[#f4efe6]">{paper.label}</p>
+                    <p className="mt-0.5 text-sm text-[#a89f91]">
+                      {paper.description}
+                    </p>
+                  </div>
+                  <span className="text-xs text-[#8a8276]">
+                    {paper.questionCount}q
+                  </span>
                 </div>
-                <span
-                  className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
-                    selected
-                      ? 'border-orange-400 bg-orange-500 text-[10px] text-white'
-                      : 'border-white/25'
-                  }`}
-                  aria-hidden
-                >
-                  {selected ? '✓' : ''}
-                </span>
-              </div>
-              <p className="mt-3 text-xs font-medium tracking-wide text-[#8a8276] uppercase">
-                {paper.questionCount} questions
-              </p>
-            </button>
-          )
-        })}
-      </div>
+              </button>
+            )
+          })}
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xs font-semibold tracking-[0.16em] text-[#8a8276] uppercase">
+          2 · Study mode
+        </h2>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {MODES.map((mode) => {
+            const selected = mode.id === selectedMode
+            return (
+              <button
+                key={mode.id}
+                type="button"
+                onClick={() => onSelectMode(mode.id)}
+                className={`rounded-xl border px-4 py-3 text-left transition ${
+                  selected
+                    ? 'border-orange-400/70 bg-orange-500/20'
+                    : 'border-white/12 bg-white/5 hover:border-orange-400/40'
+                }`}
+              >
+                <p className="font-semibold text-[#f4efe6]">{mode.title}</p>
+                <p className="mt-1 text-sm leading-snug text-[#a89f91]">
+                  {mode.blurb}
+                </p>
+              </button>
+            )
+          })}
+        </div>
+      </section>
 
       <button
         type="button"
-        disabled={!selectedPaperId}
+        disabled={!canStart}
         onClick={onStart}
         className="rounded-xl border border-orange-500/50 bg-orange-500/25 px-6 py-3 text-base font-semibold text-orange-50 transition hover:bg-orange-500/35 disabled:cursor-not-allowed disabled:opacity-40"
       >
-        Start studying
+        Start
       </button>
     </div>
   )

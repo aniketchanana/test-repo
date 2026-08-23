@@ -4,7 +4,13 @@ import {
   loadStoredProgress,
   saveStoredProgress,
 } from '../lib/progress'
-import type { AnswerMap, OptionLetter, PaperId, Question } from '../types'
+import type {
+  AnswerMap,
+  OptionLetter,
+  PaperId,
+  Question,
+  StudyMode,
+} from '../types'
 
 export function normalizeCorrect(
   correct: Question['correct_answer'],
@@ -30,25 +36,19 @@ function selectionSize(selected: OptionLetter | OptionLetter[] | undefined) {
   return Array.isArray(selected) ? selected.length : 1
 }
 
-export function useQuiz(questions: Question[], paperId: PaperId) {
-  const [currentIndex, setCurrentIndex] = useState(() => {
-    const saved = loadStoredProgress()
-    if (!saved || saved.paperId !== paperId) return 0
-    return Math.min(
-      Math.max(saved.currentIndex, 0),
-      Math.max(questions.length - 1, 0),
-    )
-  })
-  const [answers, setAnswers] = useState<AnswerMap>(() => {
-    const saved = loadStoredProgress()
-    if (!saved || saved.paperId !== paperId) return {}
-    return saved.answers
-  })
+export function useQuiz(
+  questions: Question[],
+  paperId: PaperId,
+  mode: StudyMode,
+) {
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [answers, setAnswers] = useState<AnswerMap>({})
+  const [examSubmitted, setExamSubmitted] = useState(false)
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
     const saved = loadStoredProgress()
-    if (saved && saved.paperId === paperId) {
+    if (saved && saved.paperId === paperId && saved.mode === mode) {
       setCurrentIndex(
         Math.min(
           Math.max(saved.currentIndex, 0),
@@ -56,24 +56,48 @@ export function useQuiz(questions: Question[], paperId: PaperId) {
         ),
       )
       setAnswers(saved.answers)
+      setExamSubmitted(Boolean(saved.examSubmitted))
     } else {
       setCurrentIndex(0)
       setAnswers({})
-      saveStoredProgress({ paperId, currentIndex: 0, answers: {} })
+      setExamSubmitted(false)
+      saveStoredProgress({
+        paperId,
+        mode,
+        currentIndex: 0,
+        answers: {},
+        examSubmitted: false,
+      })
     }
     setReady(true)
-  }, [paperId, questions.length])
+  }, [paperId, mode, questions.length])
 
   useEffect(() => {
     if (!ready) return
-    saveStoredProgress({ paperId, currentIndex, answers })
-  }, [answers, currentIndex, paperId, ready])
+    saveStoredProgress({
+      paperId,
+      mode,
+      currentIndex,
+      answers,
+      examSubmitted,
+    })
+  }, [answers, currentIndex, examSubmitted, mode, paperId, ready])
 
   const current = questions[currentIndex]
   const selected = current ? answers[current.id] : undefined
   const selectCount = current?.select_count ?? 1
   const isAnswered =
     selected !== undefined && selectionSize(selected) >= selectCount
+
+  const answeredCount = useMemo(() => {
+    let count = 0
+    for (const q of questions) {
+      const ans = answers[q.id]
+      const needed = q.select_count ?? 1
+      if (ans !== undefined && selectionSize(ans) >= needed) count += 1
+    }
+    return count
+  }, [answers, questions])
 
   const { correctCount, incorrectCount } = useMemo(() => {
     let correct = 0
@@ -90,10 +114,14 @@ export function useQuiz(questions: Question[], paperId: PaperId) {
 
   const selectOption = useCallback(
     (letter: OptionLetter) => {
-      if (!current) return
+      if (!current || examSubmitted) return
       const needed = current.select_count ?? 1
-      const existing = answers[current.id]
-      if (existing !== undefined && selectionSize(existing) >= needed) return
+
+      // Flashcard: lock once fully answered.
+      if (mode === 'flashcard') {
+        const existing = answers[current.id]
+        if (existing !== undefined && selectionSize(existing) >= needed) return
+      }
 
       if (needed === 1) {
         setAnswers((prev) => ({ ...prev, [current.id]: letter }))
@@ -112,11 +140,17 @@ export function useQuiz(questions: Question[], paperId: PaperId) {
           }
           return { ...prev, [current.id]: next }
         }
-        if (currentSelection.length >= needed) return prev
+        if (mode === 'flashcard' && currentSelection.length >= needed) {
+          return prev
+        }
+        if (mode === 'exam' && currentSelection.length >= needed) {
+          // Replace oldest by appending and trimming? Prefer block when full unless toggling.
+          return prev
+        }
         return { ...prev, [current.id]: [...currentSelection, letter] }
       })
     },
-    [answers, current],
+    [answers, current, examSubmitted, mode],
   )
 
   const next = useCallback(() => {
@@ -127,9 +161,23 @@ export function useQuiz(questions: Question[], paperId: PaperId) {
     setCurrentIndex((i) => Math.max(i - 1, 0))
   }, [])
 
+  const goTo = useCallback(
+    (index: number) => {
+      setCurrentIndex(
+        Math.min(Math.max(index, 0), Math.max(questions.length - 1, 0)),
+      )
+    },
+    [questions.length],
+  )
+
+  const submitExam = useCallback(() => {
+    setExamSubmitted(true)
+  }, [])
+
   const reset = useCallback(() => {
     setCurrentIndex(0)
     setAnswers({})
+    setExamSubmitted(false)
     clearStoredProgress()
   }, [])
 
@@ -147,12 +195,18 @@ export function useQuiz(questions: Question[], paperId: PaperId) {
     isCorrect,
     correctCount,
     incorrectCount,
+    answeredCount,
     selectOption,
     next,
     prev,
+    goTo,
     reset,
+    submitExam,
+    examSubmitted,
     canPrev: currentIndex > 0,
     canNext: currentIndex < questions.length - 1,
     selectCount,
+    answers,
+    questions,
   }
 }
